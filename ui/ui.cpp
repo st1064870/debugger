@@ -34,7 +34,6 @@ limitations under the License.
 #include <thread>
 #include <QInputDialog>
 #include <filesystem>
-#include "msi.h"
 #include <QMessageBox>
 
 using namespace BinaryNinja;
@@ -109,6 +108,9 @@ static void BreakpointToggleCallback(BinaryView* view, uint64_t addr)
 }
 
 
+#ifdef WIN32
+#include "msi.h"
+
 static bool InstallDbgEngRedistributable()
 {
     std::filesystem::path dbgEngPath;
@@ -152,6 +154,7 @@ static bool InstallDbgEngRedistributable()
     }
     return true;
 }
+#endif
 
 
 void GlobalDebuggerUI::SetupMenu(UIContext* context)
