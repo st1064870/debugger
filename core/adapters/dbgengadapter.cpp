@@ -36,21 +36,147 @@ limitations under the License.
 #pragma warning(pop)
 
 using namespace BinaryNinjaDebugger;
-
+using namespace std;
 
 #define QUERY_DEBUG_INTERFACE(query, out) \
     if ( const auto result = this->m_debugClient->QueryInterface(__uuidof(query), reinterpret_cast<void**>(out) ); \
             result != S_OK) \
         throw std::runtime_error("Failed to create "#query)
 
+std::string DbgEngAdapter::GetDbgEngPath()
+{
+    auto path = Settings::Instance()->Get<string>("debugger.dbgEngPath");
+    if (path.empty())
+        return path;
+
+    auto enginePath = filesystem::path(path) / "x64";
+    if (!filesystem::exists(enginePath))
+        return "";
+
+    if (!filesystem::exists(enginePath / "dbgeng.dll"))
+        return "";
+
+    if (!filesystem::exists(enginePath / "dbghelp.dll"))
+        return "";
+
+    if (!filesystem::exists(enginePath / "dbgmodel.dll"))
+        return "";
+
+    if (!filesystem::exists(enginePath / "dbgcore.dll"))
+        return "";
+
+    if (!filesystem::exists(enginePath / "dbgsrv.exe"))
+        return "";
+
+    return enginePath.string();
+}
+
+bool DbgEngAdapter::LoadDngEngLibraries()
+{
+    auto enginePath = GetDbgEngPath();
+    if (!enginePath.empty())
+    {
+        if (!SetDllDirectoryA(enginePath.c_str()))
+            LogWarn("Failed to set DLL directory to %s. The debugger is going to load the system dbgeng DLLs and they may"
+                    "not work as expected", enginePath.c_str());
+    }
+    else
+    {
+        LogWarn("debugger.dbgEngPath is empty or invalid. The debugger is going to load the system dbgeng DLLs and they may"
+                "not work as expected");
+    }
+
+    HMODULE handle;
+    handle = LoadLibraryA("dbgcore.dll");
+    if (handle == nullptr)
+    {
+        LogWarn("fail to load dbgcore.dll, %d", GetLastError());
+        return false;
+    }
+
+    handle = LoadLibraryA("dbghelp.dll");
+    if (handle == nullptr)
+    {
+        LogWarn("fail to load dbghelp.dll, %d", GetLastError());
+        return false;
+    }
+
+    handle = LoadLibraryA("dbgmodel.dll");
+    if (handle == nullptr)
+    {
+        LogWarn("fail to load dbgmodel.dll, %d", GetLastError());
+        return false;
+    }
+
+    handle = LoadLibraryA("dbgeng.dll");
+    if (handle == nullptr)
+    {
+        LogWarn("fail to load dbgeng.dll, %d", GetLastError());
+        return false;
+    }
+}
+
+std::string DbgEngAdapter::GenerateRandomPipeName()
+{
+    return "foobar";
+}
+
 void DbgEngAdapter::Start()
 {
     if ( this->m_debugActive )
         this->Reset();
 
+    auto pipeName = GenerateRandomPipeName();
+    auto connectString = fmt::format("npipe:pipe={},Server=localhost", pipeName);
+    auto dbgsrvCommandLine = fmt::format("\"{}\\dbgsrv.exe\" -t {}", GetDbgEngPath(), connectString);
+    auto ret = _popen(dbgsrvCommandLine.c_str(), "r");
+    if (ret == nullptr)
+    {
+        LogWarn("Command %s failed: %d", dbgsrvCommandLine.c_str(), ret);
+        return;
+    }
+
+    auto handle = GetModuleHandleA("dbgeng.dll");
+    if (handle == nullptr)
+        return;
+
+    //    HRESULT DebugCreate(
+    //    [in]  REFIID InterfaceId,
+    //    [out] PVOID  *Interface
+    //    );
+    typedef HRESULT(__stdcall *pfunDebugCreate)(REFIID, PVOID*);
+    auto DebugCreate = (pfunDebugCreate)GetProcAddress(handle, "DebugCreate");
+    if (DebugCreate == nullptr)
+    {
+        cout << "fail to get address of DebugCreate()" << endl;
+        return;
+    }
+
     if (const auto result = DebugCreate(__uuidof(IDebugClient5), reinterpret_cast<void**>(&this->m_debugClient));
             result != S_OK)
         throw std::runtime_error("Failed to create IDebugClient5");
+
+    constexpr size_t CONNECTION_MAX_TRY = 10;
+    bool connected = false;
+    for (size_t i = 0; i < CONNECTION_MAX_TRY; i++)
+    {
+        auto result = m_debugClient->ConnectProcessServer(connectString.c_str(), &m_server);
+        if (result == S_OK)
+        {
+            connected = true;
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    if (connected)
+    {
+        LogWarn("Server is %d", m_server);
+    }
+    else
+    {
+        LogWarn("Failed to connect process server");
+    }
 
     QUERY_DEBUG_INTERFACE(IDebugControl5, &this->m_debugControl);
     QUERY_DEBUG_INTERFACE(IDebugDataSpaces, &this->m_debugDataSpaces);
@@ -95,6 +221,7 @@ void DbgEngAdapter::Reset()
     {
         this->m_debugClient->EndSession(DEBUG_END_PASSIVE);
         this->m_debugClient->Release();
+        this->m_debugClient->EndProcessServer(m_server);
         this->m_debugClient = nullptr;
     }
 
@@ -105,6 +232,7 @@ void DbgEngAdapter::Reset()
 
 DbgEngAdapter::DbgEngAdapter(BinaryView* data): DebugAdapter(data)
 {
+    LoadDngEngLibraries();
 }
 
 DbgEngAdapter::~DbgEngAdapter()
@@ -174,7 +302,7 @@ bool DbgEngAdapter::ExecuteWithArgsInternal(const std::string& path, const std::
 	if (workingDir.empty())
 		directory = nullptr;
 
-	if (const auto result = this->m_debugClient->CreateProcess2(0,
+	if (const auto result = this->m_debugClient->CreateProcess2(m_server,
 			const_cast<char*>( path_with_args.c_str() ), &options, sizeof(DEBUG_CREATE_PROCESS_OPTIONS),
 			directory, nullptr);
             result != S_OK)
@@ -288,7 +416,7 @@ bool DbgEngAdapter::AttachInternal(std::uint32_t pid)
         return false;
     }
 
-    if (const auto result = this->m_debugClient->AttachProcess(0, pid, 0);
+    if (const auto result = this->m_debugClient->AttachProcess(m_server, pid, 0);
         result != S_OK )
     {
         this->Reset();

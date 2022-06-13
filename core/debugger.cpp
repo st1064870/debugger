@@ -69,6 +69,17 @@ static void RegisterSettings()
 			"description" : "Stop the target at program entry point",
 			"ignore" : ["SettingsProjectScope", "SettingsResourceScope"]
 			})");
+
+#ifdef WIN32
+    settings->RegisterSetting("debugger.dbgEngPath",
+  R"({
+			"title" : "DbgEng Installation Path",
+			"type" : "string",
+			"default" : "C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers",
+			"description" : "Path of the DbgEng Installation",
+			"ignore" : ["SettingsProjectScope", "SettingsResourceScope"]
+			})");
+#endif
 }
 
 extern "C"

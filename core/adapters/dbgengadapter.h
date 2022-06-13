@@ -115,6 +115,8 @@ namespace BinaryNinjaDebugger
 
         std::vector<ModuleNameAndOffset> m_pendingBreakpoints{};
 
+        ULONG64 m_server{};
+
 	public:
 		inline static ProcessCallbackInformation ProcessCallbackInfo{};
 		static constexpr unsigned long StepoutBreakpointID = 0x5be9c948;
@@ -187,6 +189,12 @@ namespace BinaryNinjaDebugger
 		std::vector<DebugFrame> GetFramesOfThread(uint32_t tid) override;
 
         void ApplyBreakpoints();
+
+        std::string GetDbgEngPath();
+
+        bool LoadDngEngLibraries();
+
+        std::string GenerateRandomPipeName();
 	};
 
 	class LocalDbgEngAdapterType: public DebugAdapterType
