@@ -43,13 +43,13 @@ using namespace std;
             result != S_OK) \
         throw std::runtime_error("Failed to create "#query)
 
-std::string DbgEngAdapter::GetDbgEngPath()
+std::string DbgEngAdapter::GetDbgEngPath(const std::string& arch)
 {
     auto path = Settings::Instance()->Get<string>("debugger.dbgEngPath");
     if (path.empty())
         return path;
 
-    auto enginePath = filesystem::path(path) / "x64";
+    auto enginePath = filesystem::path(path) / arch;
     if (!filesystem::exists(enginePath))
         return "";
 
@@ -128,7 +128,8 @@ void DbgEngAdapter::Start()
 
     auto pipeName = GenerateRandomPipeName();
     auto connectString = fmt::format("npipe:pipe={},Server=localhost", pipeName);
-    auto dbgsrvCommandLine = fmt::format("\"{}\\dbgsrv.exe\" -t {}", GetDbgEngPath(), connectString);
+    auto arch = m_data->GetDefaultArchitecture()->GetName() == "x86_64" ? "x64" : "x86";
+    auto dbgsrvCommandLine = fmt::format("\"{}\\dbgsrv.exe\" -t {}", GetDbgEngPath(arch), connectString);
     auto ret = _popen(dbgsrvCommandLine.c_str(), "r");
     if (ret == nullptr)
     {

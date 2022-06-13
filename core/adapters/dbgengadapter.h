@@ -190,7 +190,7 @@ namespace BinaryNinjaDebugger
 
         void ApplyBreakpoints();
 
-        std::string GetDbgEngPath();
+        std::string GetDbgEngPath(const std::string& arch = "x64");
 
         bool LoadDngEngLibraries();
 
