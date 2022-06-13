@@ -130,6 +130,29 @@ std::string DbgEngAdapter::GenerateRandomPipeName()
     return result;
 }
 
+bool DbgEngAdapter::LaunchDbgSrv(const std::string& commandLine)
+{
+    STARTUPINFOA si;
+    PROCESS_INFORMATION pi;
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
+    memset(&pi, 0, sizeof(pi));
+    if (!CreateProcessA(NULL,
+                        (LPSTR)commandLine.c_str(),
+                        NULL,
+                        NULL,
+                        FALSE,
+                        0,
+                        NULL,
+                        NULL,
+                        &si,
+                        &pi))
+    {
+        return false;
+    }
+    return true;
+}
+
 void DbgEngAdapter::Start()
 {
     if ( this->m_debugActive )
@@ -139,10 +162,9 @@ void DbgEngAdapter::Start()
     auto connectString = fmt::format("npipe:pipe={},Server=localhost", pipeName);
     auto arch = m_data->GetDefaultArchitecture()->GetName() == "x86_64" ? "x64" : "x86";
     auto dbgsrvCommandLine = fmt::format("\"{}\\dbgsrv.exe\" -t {}", GetDbgEngPath(arch), connectString);
-    auto ret = _popen(dbgsrvCommandLine.c_str(), "r");
-    if (ret == nullptr)
+    if (!LaunchDbgSrv(dbgsrvCommandLine))
     {
-        LogWarn("Command %s failed: %d", dbgsrvCommandLine.c_str(), ret);
+        LogWarn("Command %s failed", dbgsrvCommandLine.c_str());
         return;
     }
 

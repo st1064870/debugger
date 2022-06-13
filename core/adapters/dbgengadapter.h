@@ -195,6 +195,8 @@ namespace BinaryNinjaDebugger
         bool LoadDngEngLibraries();
 
         std::string GenerateRandomPipeName();
+
+        bool LaunchDbgSrv(const std::string& commandLine);
 	};
 
 	class LocalDbgEngAdapterType: public DebugAdapterType
