@@ -33,6 +33,9 @@ limitations under the License.
 #include "adaptersettings.h"
 #include <thread>
 #include <QInputDialog>
+#include <filesystem>
+#include "msi.h"
+#include <QMessageBox>
 
 using namespace BinaryNinja;
 using namespace BinaryNinjaDebuggerAPI;
@@ -103,6 +106,51 @@ static void BreakpointToggleCallback(BinaryView* view, uint64_t addr)
             controller->AddBreakpoint(info);
         }
     }
+}
+
+
+static bool InstallDbgEngRedistributable()
+{
+    std::filesystem::path dbgEngPath;
+    if (getenv("BN_STANDALONE_DEBUGGER") != nullptr)
+    {
+        auto pluginsPath = BinaryNinja::GetUserPluginDirectory();
+        if (pluginsPath.empty())
+            return false;
+
+        auto path = std::filesystem::path(pluginsPath);
+        dbgEngPath = path / "dbgeng";
+    }
+    else
+    {
+        auto installPath = BinaryNinja::GetInstallDirectory();
+        if (installPath.empty())
+            return false;
+
+        auto path = std::filesystem::path(installPath);
+        dbgEngPath = path / "plugins" / "dbgeng";
+    }
+
+    if (!std::filesystem::exists(dbgEngPath))
+    {
+        LogWarn("path %d does not exists", dbgEngPath.string().c_str());
+        return false;
+    }
+
+    auto x64Path = dbgEngPath / "X64 Debuggers And Tools-x64_en-us.msi";
+    auto ret = MsiInstallProductA(x64Path.string().c_str(), "");
+    if (ret != ERROR_SUCCESS)
+    {
+        return false;
+    }
+
+    auto x86Path = dbgEngPath / "X86 Debuggers And Tools-x86_en-us.msi";
+    ret = MsiInstallProductA((char*)x86Path.string().c_str(), "");
+    if (ret != ERROR_SUCCESS)
+    {
+        return false;
+    }
+    return true;
 }
 
 
@@ -310,6 +358,23 @@ void GlobalDebuggerUI::SetupMenu(UIContext* context)
 		BreakpointToggleCallback(ctxt.binaryView, ctxt.address);
 	}, connectedAndStopped));
 	debuggerMenu->addAction("Toggle Breakpoint", "Breakpoint");
+
+#ifdef WIN32
+    UIAction::registerAction("Reinstall DbgEng Redistributable");
+    context->globalActions()->bindAction("Reinstall DbgEng Redistributable", UIAction([=](const UIActionContext& ctxt) {
+        if (!InstallDbgEngRedistributable())
+        {
+            QMessageBox::warning(nullptr, QString("Failed to install"), QString("Failed to install DbgEng redistributable. "
+                                                                    "The debugger is likely to malfunction"));
+        }
+        else
+        {
+            QMessageBox::warning(nullptr, QString("Successfully installed"),
+                                 QString("Successfully installed DbgEng redistributable."));
+        }
+    }));
+    debuggerMenu->addAction("Reinstall DbgEng Redistributable", "Misc");
+#endif
 }
 
 
