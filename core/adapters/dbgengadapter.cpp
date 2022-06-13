@@ -118,7 +118,16 @@ bool DbgEngAdapter::LoadDngEngLibraries()
 
 std::string DbgEngAdapter::GenerateRandomPipeName()
 {
-    return "foobar";
+    const std::string chars = "abcdefghijklmnopqrstuvwxyz1234567890";
+    constexpr size_t length = 16;
+    srand(time(NULL));
+
+    std::string result;
+    result.resize(length);
+    for (size_t i = 0; i < length; i++)
+        result[i] = chars[rand() % chars.length()];
+
+    return result;
 }
 
 void DbgEngAdapter::Start()
