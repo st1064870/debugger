@@ -188,7 +188,7 @@ void DbgEngAdapter::Start()
             result != S_OK)
         throw std::runtime_error("Failed to create IDebugClient5");
 
-    constexpr size_t CONNECTION_MAX_TRY = 10;
+    constexpr size_t CONNECTION_MAX_TRY = 300;
     bool connected = false;
     for (size_t i = 0; i < CONNECTION_MAX_TRY; i++)
     {
@@ -201,11 +201,7 @@ void DbgEngAdapter::Start()
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    if (connected)
-    {
-        LogWarn("Server is %d", m_server);
-    }
-    else
+    if (!connected)
     {
         LogWarn("Failed to connect process server");
     }
