@@ -199,6 +199,26 @@ void GlobalDebuggerUI::SetupMenu(UIContext* context)
 		return controller->IsConnected() && controller->IsRunning();
 	};
 
+    auto connectedToDebugServer = [=](const UIActionContext& ctxt) {
+        if (!ctxt.binaryView)
+            return false;
+        auto controller = DebuggerController::GetController(ctxt.binaryView);
+        if (!controller)
+            return false;
+
+        return controller->IsConnectedToDebugServer();
+    };
+
+    auto notConnectedToDebugServer = [=](const UIActionContext& ctxt) {
+        if (!ctxt.binaryView)
+            return false;
+        auto controller = DebuggerController::GetController(ctxt.binaryView);
+        if (!controller)
+            return false;
+
+        return !controller->IsConnectedToDebugServer();
+    };
+
 	UIAction::registerAction("Launch/Connect Settings...");
 	context->globalActions()->bindAction("Launch/Connect Settings...", UIAction([=](const UIActionContext& ctxt) {
 		if (!ctxt.binaryView)
@@ -396,7 +416,7 @@ void GlobalDebuggerUI::SetupMenu(UIContext* context)
             QMessageBox::information(context->mainWindow(), "Failed to connect",
                                      "Cannot connect to the debug server. Please check the connection configuration.");
         }
-    }, notConnected));
+    }, notConnectedToDebugServer));
     debuggerMenu->addAction("Connect to Debug Server", "Launch");
 
     UIAction::registerAction("Disconnect from Debug Server");
@@ -408,7 +428,7 @@ void GlobalDebuggerUI::SetupMenu(UIContext* context)
             return;
 
         controller->DisconnectDebugServer();
-    }));
+    }, connectedToDebugServer));
     debuggerMenu->addAction("Disconnect from Debug Server", "Launch");
 
 #endif

@@ -75,6 +75,12 @@ bool DebuggerController::IsConnected()
 }
 
 
+bool DebuggerController::IsConnectedToDebugServer()
+{
+    return BNDebuggerIsConnectedToDebugServer(m_object);
+}
+
+
 bool DebuggerController::IsRunning()
 {
 	return BNDebuggerIsRunning(m_object);

@@ -137,6 +137,12 @@ bool BNDebuggerIsConnected(BNDebuggerController* controller)
 }
 
 
+bool BNDebuggerIsConnectedToDebugServer(BNDebuggerController* controller)
+{
+    return controller->object->GetState()->IsConnectedToDebugServer();
+}
+
+
 bool BNDebuggerIsRunning(BNDebuggerController* controller)
 {
 	return controller->object->GetState()->IsRunning();

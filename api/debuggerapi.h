@@ -241,6 +241,7 @@ namespace BinaryNinjaDebuggerAPI
 		Ref<Architecture> GetRemoteArchitecture();
 
 		bool IsConnected();
+        bool IsConnectedToDebugServer();
 		bool IsRunning();
 
 		uint64_t StackPointer();

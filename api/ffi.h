@@ -284,6 +284,7 @@ extern "C"
 	DEBUGGER_FFI_API BNBinaryView* BNDebuggerGetData(BNDebuggerController* controller);
 	DEBUGGER_FFI_API BNArchitecture* BNDebuggerGetRemoteArchitecture(BNDebuggerController* controller);
 	DEBUGGER_FFI_API bool BNDebuggerIsConnected(BNDebuggerController* controller);
+    DEBUGGER_FFI_API bool BNDebuggerIsConnectedToDebugServer(BNDebuggerController* controller);
 	DEBUGGER_FFI_API bool BNDebuggerIsRunning(BNDebuggerController* controller);
 
 	DEBUGGER_FFI_API uint64_t BNDebuggerGetStackPointer(BNDebuggerController* controller);

@@ -772,12 +772,17 @@ void DebuggerController::Connect()
 
 bool DebuggerController::ConnectToDebugServer()
 {
+    if (m_state->IsConnectedToDebugServer())
+        return true;
+
     if (!CreateDebugAdapter())
         return false;
 
     bool ok = m_adapter->ConnectToDebugServer(m_state->GetRemoteHost(), m_state->GetRemotePort());
     if (!ok)
         LogWarn("fail to connect to the debug server");
+    else
+        m_state->SetConnectedToDebugServer(true);
 
     return ok;
 }
@@ -785,9 +790,14 @@ bool DebuggerController::ConnectToDebugServer()
 
 bool DebuggerController::DisconnectDebugServer()
 {
+    if (!m_state->IsConnectedToDebugServer())
+        return true;
+
     bool ok = m_adapter->DisconnectDebugServer();
     if (!ok)
         LogWarn("fail to disconnect from the debug server");
+    else
+        m_state->SetConnectedToDebugServer(false);
 
     return ok;
 }
