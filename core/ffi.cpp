@@ -348,9 +348,9 @@ void BNDebuggerConnect(BNDebuggerController* controller)
 }
 
 
-void BNDebuggerConnectToDebugServer(BNDebuggerController* controller)
+bool BNDebuggerConnectToDebugServer(BNDebuggerController* controller)
 {
-    controller->object->ConnectToDebugServer();
+    return controller->object->ConnectToDebugServer();
 }
 
 

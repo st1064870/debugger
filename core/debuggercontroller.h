@@ -186,7 +186,7 @@ namespace BinaryNinjaDebugger
 		void Restart();
 		void Quit();
 		void Connect();
-        void ConnectToDebugServer();
+        bool ConnectToDebugServer();
         bool DisconnectDebugServer();
 		void Detach();
 		// Convenience function, either launch the target process or connect to a remote, depending on the selected adapter

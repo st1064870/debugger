@@ -264,9 +264,9 @@ void DebuggerController::Connect()
 }
 
 
-void DebuggerController::ConnectToDebugServer()
+bool DebuggerController::ConnectToDebugServer()
 {
-    BNDebuggerConnectToDebugServer(m_object);
+    return BNDebuggerConnectToDebugServer(m_object);
 }
 
 

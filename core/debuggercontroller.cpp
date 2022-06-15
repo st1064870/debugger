@@ -770,23 +770,16 @@ void DebuggerController::Connect()
 }
 
 
-void DebuggerController::ConnectToDebugServer()
+bool DebuggerController::ConnectToDebugServer()
 {
-//    if (m_state->IsConnected())
-//        return;
-
     if (!CreateDebugAdapter())
-        return;
-
-//    m_state->MarkDirty();
-
-//    m_state->SetConnectionStatus(DebugAdapterConnectingStatus);
-
-//    NotifyEvent(ConnectEventType);
+        return false;
 
     bool ok = m_adapter->ConnectToDebugServer(m_state->GetRemoteHost(), m_state->GetRemotePort());
     if (!ok)
         LogWarn("fail to connect to the debug server");
+
+    return ok;
 }
 
 

@@ -386,9 +386,16 @@ void GlobalDebuggerUI::SetupMenu(UIContext* context)
         if (!controller)
             return;
 
-        std::thread([=]() {
-            controller->ConnectToDebugServer();
-        }).detach();
+        if (controller->ConnectToDebugServer())
+        {
+            QMessageBox::information(context->mainWindow(), "Successfully connected",
+                                     "Successfully connected to the debug server. Now you can launch or attach to a process.");
+        }
+        else
+        {
+            QMessageBox::information(context->mainWindow(), "Failed to connect",
+                                     "Cannot connect to the debug server. Please check the connection configuration.");
+        }
     }, notConnected));
     debuggerMenu->addAction("Connect to Debug Server", "Launch");
 
