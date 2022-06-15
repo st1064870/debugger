@@ -148,6 +148,10 @@ bool DebuggerController::Execute()
 
 bool DebuggerController::CreateDebugAdapter()
 {
+    // The current adapter type is the same as the last one, and the last adapter is still valid
+    if (m_state->GetAdapterType() == m_lastAdapterName && m_adapter != nullptr)
+        return true;
+
     DebugAdapterType* type = DebugAdapterType::GetByName(m_state->GetAdapterType());
     if (!type)
     {
@@ -161,6 +165,7 @@ bool DebuggerController::CreateDebugAdapter()
 		return false;
 	}
 
+    m_lastAdapterName = m_state->GetAdapterType();
 	m_state->SetAdapter(m_adapter);
 
 	ApplyBreakpoints();
@@ -762,6 +767,26 @@ void DebuggerController::Connect()
     {
         LogWarn("fail to connect to the target");
     }
+}
+
+
+void DebuggerController::ConnectToDebugServer()
+{
+//    if (m_state->IsConnected())
+//        return;
+
+    if (!CreateDebugAdapter())
+        return;
+
+//    m_state->MarkDirty();
+
+//    m_state->SetConnectionStatus(DebugAdapterConnectingStatus);
+
+//    NotifyEvent(ConnectEventType);
+
+    bool ok = m_adapter->ConnectToDebugServer(m_state->GetRemoteHost(), m_state->GetRemotePort());
+    if (!ok)
+        LogWarn("fail to connect to the debug server");
 }
 
 

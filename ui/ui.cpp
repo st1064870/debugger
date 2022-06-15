@@ -377,6 +377,20 @@ void GlobalDebuggerUI::SetupMenu(UIContext* context)
         }
     }));
     debuggerMenu->addAction("Reinstall DbgEng Redistributable", "Misc");
+
+    UIAction::registerAction("Connect to Debug Server");
+    context->globalActions()->bindAction("Connect to Debug Server", UIAction([=](const UIActionContext& ctxt) {
+        if (!ctxt.binaryView)
+            return;
+        auto controller = DebuggerController::GetController(ctxt.binaryView);
+        if (!controller)
+            return;
+
+        std::thread([=]() {
+            controller->ConnectToDebugServer();
+        }).detach();
+    }, notConnected));
+    debuggerMenu->addAction("Connect to Debug Server", "Launch");
 #endif
 }
 

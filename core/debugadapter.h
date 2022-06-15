@@ -194,7 +194,9 @@ namespace BinaryNinjaDebugger
 
 		[[nodiscard]] virtual bool Connect(const std::string &server, std::uint32_t port) = 0;
 
-		virtual void Detach() = 0;
+        virtual bool ConnectToDebugServer(const std::string &server, std::uint32_t port);
+
+        virtual void Detach() = 0;
 
 		virtual void Quit() = 0;
 

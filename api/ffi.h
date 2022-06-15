@@ -315,6 +315,7 @@ extern "C"
 	DEBUGGER_FFI_API void BNDebuggerRestart(BNDebuggerController* controller);
 	DEBUGGER_FFI_API void BNDebuggerQuit(BNDebuggerController* controller);
 	DEBUGGER_FFI_API void BNDebuggerConnect(BNDebuggerController* controller);
+    DEBUGGER_FFI_API void BNDebuggerConnectToDebugServer(BNDebuggerController* controller);
 	DEBUGGER_FFI_API void BNDebuggerDetach(BNDebuggerController* controller);
 	// Convenience function, either launch the target process or connect to a remote, depending on the selected adapter
 	DEBUGGER_FFI_API void BNDebuggerLaunchOrConnect(BNDebuggerController* controller);

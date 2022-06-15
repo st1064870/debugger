@@ -153,24 +153,11 @@ bool DbgEngAdapter::LaunchDbgSrv(const std::string& commandLine)
     return true;
 }
 
-void DbgEngAdapter::Start()
+bool DbgEngAdapter::ConnectToDebugServerInternal(const std::string& connectionString)
 {
-    if ( this->m_debugActive )
-        this->Reset();
-
-    auto pipeName = GenerateRandomPipeName();
-    auto connectString = fmt::format("npipe:pipe={},Server=localhost", pipeName);
-    auto arch = m_data->GetDefaultArchitecture()->GetName() == "x86_64" ? "x64" : "x86";
-    auto dbgsrvCommandLine = fmt::format("\"{}\\dbgsrv.exe\" -t {}", GetDbgEngPath(arch), connectString);
-    if (!LaunchDbgSrv(dbgsrvCommandLine))
-    {
-        LogWarn("Command %s failed", dbgsrvCommandLine.c_str());
-        return;
-    }
-
     auto handle = GetModuleHandleA("dbgeng.dll");
     if (handle == nullptr)
-        return;
+        false;
 
     //    HRESULT DebugCreate(
     //    [in]  REFIID InterfaceId,
@@ -179,31 +166,48 @@ void DbgEngAdapter::Start()
     typedef HRESULT(__stdcall *pfunDebugCreate)(REFIID, PVOID*);
     auto DebugCreate = (pfunDebugCreate)GetProcAddress(handle, "DebugCreate");
     if (DebugCreate == nullptr)
-    {
-        cout << "fail to get address of DebugCreate()" << endl;
-        return;
-    }
+        return false;
 
     if (const auto result = DebugCreate(__uuidof(IDebugClient5), reinterpret_cast<void**>(&this->m_debugClient));
             result != S_OK)
         throw std::runtime_error("Failed to create IDebugClient5");
 
     constexpr size_t CONNECTION_MAX_TRY = 300;
-    bool connected = false;
     for (size_t i = 0; i < CONNECTION_MAX_TRY; i++)
     {
-        auto result = m_debugClient->ConnectProcessServer(connectString.c_str(), &m_server);
+        auto result = m_debugClient->ConnectProcessServer(connectionString.c_str(), &m_server);
         if (result == S_OK)
         {
-            connected = true;
-            break;
+            m_connectedToDebugServer = true;
+            return true;
         }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    if (!connected)
+    return false;
+}
+
+bool DbgEngAdapter::Start()
+{
+    if ( this->m_debugActive )
+        this->Reset();
+
+    if (!m_connectedToDebugServer)
     {
-        LogWarn("Failed to connect process server");
+        auto pipeName = GenerateRandomPipeName();
+        auto connectString = fmt::format("npipe:pipe={},Server=localhost", pipeName);
+        auto arch = m_data->GetDefaultArchitecture()->GetName() == "x86_64" ? "x64" : "x86";
+        auto dbgsrvCommandLine = fmt::format("\"{}\\dbgsrv.exe\" -t {}", GetDbgEngPath(arch), connectString);
+        if (!LaunchDbgSrv(dbgsrvCommandLine)) {
+            LogWarn("Command %s failed", dbgsrvCommandLine.c_str());
+            return false;
+        }
+
+        if (!ConnectToDebugServerInternal(connectString)) {
+            LogWarn("Failed to connect process server");
+            return false;
+        }
     }
 
     QUERY_DEBUG_INTERFACE(IDebugControl5, &this->m_debugControl);
@@ -223,6 +227,7 @@ void DbgEngAdapter::Start()
         throw std::runtime_error("Failed to set output callbacks");
 
     this->m_debugActive = true;
+    return true;
 }
 
 #undef QUERY_DEBUG_INTERFACE
@@ -250,6 +255,7 @@ void DbgEngAdapter::Reset()
         this->m_debugClient->EndSession(DEBUG_END_PASSIVE);
         this->m_debugClient->Release();
         this->m_debugClient->EndProcessServer(m_server);
+        m_connectedToDebugServer = false;
         this->m_debugClient = nullptr;
     }
 
@@ -300,7 +306,8 @@ bool DbgEngAdapter::ExecuteWithArgsInternal(const std::string& path, const std::
         this->Reset();
     }
 
-    this->Start();
+    if (!Start())
+        return false;
 
     if (const auto result = this->m_debugControl->SetEngineOptions(DEBUG_ENGOPT_INITIAL_BREAK);
             result != S_OK)
@@ -476,6 +483,12 @@ bool DbgEngAdapter::Connect(const std::string &server, std::uint32_t port)
 {
     static_assert("not implemented");
     return false;
+}
+
+bool DbgEngAdapter::ConnectToDebugServer(const std::string &server, std::uint32_t port)
+{
+    std::string connectionString = fmt::format("tcp:port={}, Server={}", port, server);
+    return ConnectToDebugServerInternal(connectionString);
 }
 
 void DbgEngAdapter::Detach()
@@ -1213,7 +1226,7 @@ bool LocalDbgEngAdapterType::IsValidForData(BinaryNinja::BinaryView *data)
 
 bool LocalDbgEngAdapterType::CanConnect(BinaryNinja::BinaryView *data)
 {
-    return false;
+    return true;
 }
 
 

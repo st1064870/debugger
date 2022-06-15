@@ -264,6 +264,12 @@ void DebuggerController::Connect()
 }
 
 
+void DebuggerController::ConnectToDebugServer()
+{
+    BNDebuggerConnectToDebugServer(m_object);
+}
+
+
 void DebuggerController::Detach()
 {
 	BNDebuggerDetach(m_object);

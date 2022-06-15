@@ -103,7 +103,7 @@ namespace BinaryNinjaDebugger
 		IDebugSystemObjects* m_debugSystemObjects{nullptr};
 		bool m_debugActive{false};
 
-		void Start();
+		bool Start();
 		void Reset();
 
 		std::vector<DebugBreakpoint> m_debug_breakpoints{};
@@ -116,6 +116,7 @@ namespace BinaryNinjaDebugger
         std::vector<ModuleNameAndOffset> m_pendingBreakpoints{};
 
         ULONG64 m_server{};
+        bool m_connectedToDebugServer = false;
 
 	public:
 		inline static ProcessCallbackInformation ProcessCallbackInfo{};
@@ -134,6 +135,7 @@ namespace BinaryNinjaDebugger
 		[[nodiscard]] bool Attach(std::uint32_t pid) override;
 		[[nodiscard]] bool AttachInternal(std::uint32_t pid);
 		[[nodiscard]] bool Connect(const std::string &server, std::uint32_t port) override;
+        bool ConnectToDebugServer(const std::string &server, std::uint32_t port) override;
 
 		void Detach() override;
 		void Quit() override;
@@ -197,6 +199,8 @@ namespace BinaryNinjaDebugger
         std::string GenerateRandomPipeName();
 
         bool LaunchDbgSrv(const std::string& commandLine);
+
+        bool ConnectToDebugServerInternal(const std::string& connectionString);
 	};
 
 	class LocalDbgEngAdapterType: public DebugAdapterType
