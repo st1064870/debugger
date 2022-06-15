@@ -354,6 +354,12 @@ void BNDebuggerConnectToDebugServer(BNDebuggerController* controller)
 }
 
 
+bool BNDebuggerDisconnectDebugServer(BNDebuggerController* controller)
+{
+    return controller->object->DisconnectDebugServer();
+}
+
+
 void BNDebuggerDetach(BNDebuggerController* controller)
 {
 	controller->object->Detach();

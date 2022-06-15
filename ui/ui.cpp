@@ -391,6 +391,19 @@ void GlobalDebuggerUI::SetupMenu(UIContext* context)
         }).detach();
     }, notConnected));
     debuggerMenu->addAction("Connect to Debug Server", "Launch");
+
+    UIAction::registerAction("Disconnect from Debug Server");
+    context->globalActions()->bindAction("Disconnect from Debug Server", UIAction([=](const UIActionContext& ctxt) {
+        if (!ctxt.binaryView)
+            return;
+        auto controller = DebuggerController::GetController(ctxt.binaryView);
+        if (!controller)
+            return;
+
+        controller->DisconnectDebugServer();
+    }));
+    debuggerMenu->addAction("Disconnect from Debug Server", "Launch");
+
 #endif
 }
 

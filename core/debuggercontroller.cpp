@@ -790,6 +790,16 @@ void DebuggerController::ConnectToDebugServer()
 }
 
 
+bool DebuggerController::DisconnectDebugServer()
+{
+    bool ok = m_adapter->DisconnectDebugServer();
+    if (!ok)
+        LogWarn("fail to disconnect from the debug server");
+
+    return ok;
+}
+
+
 void DebuggerController::Detach()
 {
     if (!m_state->IsConnected())

@@ -106,3 +106,9 @@ bool DebugAdapter::ConnectToDebugServer(const std::string &server, std::uint32_t
 {
     return false;
 }
+
+
+bool DebugAdapter::DisconnectDebugServer()
+{
+    return true;
+}

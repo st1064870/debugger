@@ -136,6 +136,7 @@ namespace BinaryNinjaDebugger
 		[[nodiscard]] bool AttachInternal(std::uint32_t pid);
 		[[nodiscard]] bool Connect(const std::string &server, std::uint32_t port) override;
         bool ConnectToDebugServer(const std::string &server, std::uint32_t port) override;
+        bool DisconnectDebugServer() override;
 
 		void Detach() override;
 		void Quit() override;

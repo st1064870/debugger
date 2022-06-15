@@ -270,6 +270,12 @@ void DebuggerController::ConnectToDebugServer()
 }
 
 
+bool DebuggerController::DisconnectDebugServer()
+{
+    return BNDebuggerDisconnectDebugServer(m_object);
+}
+
+
 void DebuggerController::Detach()
 {
 	BNDebuggerDetach(m_object);

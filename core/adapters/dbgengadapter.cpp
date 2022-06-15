@@ -491,6 +491,18 @@ bool DbgEngAdapter::ConnectToDebugServer(const std::string &server, std::uint32_
     return ConnectToDebugServerInternal(connectionString);
 }
 
+bool DbgEngAdapter::DisconnectDebugServer()
+{
+    if (!m_connectedToDebugServer)
+        return true;
+
+    auto ret = m_debugClient->DisconnectProcessServer(m_server);
+    m_connectedToDebugServer = false;
+    m_server = 0;
+
+    return ret == S_OK;
+}
+
 void DbgEngAdapter::Detach()
 {
     m_lastOperationIsStepInto = false;
