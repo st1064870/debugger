@@ -294,29 +294,29 @@ class DebuggerAPI(unittest.TestCase):
             reason = dbg.go_and_wait()
             self.assertEqual(reason, DebugStopReason.ProcessExited)
 
-    @unittest.skipIf(platform.system() == 'Linux', 'Cannot attach to pid unless running as root')
-    def test_attach(self):
-        pid = None
-        if platform.system() == 'Windows':
-            fpath = name_to_fpath('helloworld_loop', self.arch)
-            DETACHED_PROCESS = 0x00000008
-            CREATE_NEW_CONSOLE = 0x00000010
-            cmds = [fpath]
-            pid = subprocess.Popen(cmds, creationflags=CREATE_NEW_CONSOLE).pid
-        elif platform.system() in ['Darwin', 'Linux']:
-            fpath = name_to_fpath('helloworld_loop', self.arch)
-            cmds = [fpath]
-            pid = subprocess.Popen(cmds).pid
-        else:
-            print('attaching test not yet implemented on %s' % platform.system())
-
-        self.assertIsNotNone(pid)
-        bv = BinaryViewType.get_view_of_file(fpath)
-        dbg = DebuggerController(bv)
-        self.assertTrue(dbg.attach(pid))
-        self.assertGreater(len(dbg.regs), 0)
-
-        dbg.quit()
+    # @unittest.skipIf(platform.system() == 'Linux', 'Cannot attach to pid unless running as root')
+    # def test_attach(self):
+    #     pid = None
+    #     if platform.system() == 'Windows':
+    #         fpath = name_to_fpath('helloworld_loop', self.arch)
+    #         DETACHED_PROCESS = 0x00000008
+    #         CREATE_NEW_CONSOLE = 0x00000010
+    #         cmds = [fpath]
+    #         pid = subprocess.Popen(cmds, creationflags=CREATE_NEW_CONSOLE).pid
+    #     elif platform.system() in ['Darwin', 'Linux']:
+    #         fpath = name_to_fpath('helloworld_loop', self.arch)
+    #         cmds = [fpath]
+    #         pid = subprocess.Popen(cmds).pid
+    #     else:
+    #         print('attaching test not yet implemented on %s' % platform.system())
+    #
+    #     self.assertIsNotNone(pid)
+    #     bv = BinaryViewType.get_view_of_file(fpath)
+    #     dbg = DebuggerController(bv)
+    #     self.assertTrue(dbg.attach(pid))
+    #     self.assertGreater(len(dbg.regs), 0)
+    #
+    #     dbg.quit()
 
 
 @unittest.skipIf(platform.system() != 'Darwin' or platform.machine() != 'arm64', "Only run arm64 tests on arm Mac")
