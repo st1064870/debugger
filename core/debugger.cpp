@@ -71,12 +71,20 @@ static void RegisterSettings()
 			})");
 
 #ifdef WIN32
-    settings->RegisterSetting("debugger.dbgEngPath",
+    settings->RegisterSetting("debugger.x64dbgEngPath",
   R"({
-			"title" : "DbgEng Installation Path",
+			"title" : "x64 DbgEng Installation Path",
+			"type" : "string",
+			"default" : "C:\\Program Files\\Windows Kits\\10\\Debuggers",
+			"description" : "Path of the x64 DbgEng Installation",
+			"ignore" : ["SettingsProjectScope", "SettingsResourceScope"]
+			})");
+    settings->RegisterSetting("debugger.x86dbgEngPath",
+                              R"({
+			"title" : "x86 DbgEng Installation Path",
 			"type" : "string",
 			"default" : "C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers",
-			"description" : "Path of the DbgEng Installation",
+			"description" : "Path of the x86 DbgEng Installation",
 			"ignore" : ["SettingsProjectScope", "SettingsResourceScope"]
 			})");
 #endif

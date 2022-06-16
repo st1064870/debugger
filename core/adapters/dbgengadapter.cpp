@@ -45,7 +45,12 @@ using namespace std;
 
 std::string DbgEngAdapter::GetDbgEngPath(const std::string& arch)
 {
-    auto path = Settings::Instance()->Get<string>("debugger.dbgEngPath");
+    std::string path;
+    if (arch == "x64")
+        path = Settings::Instance()->Get<string>("debugger.x64dbgEngPath");
+    else
+        path = Settings::Instance()->Get<string>("debugger.x86dbgEngPath");
+
     if (path.empty())
         return path;
 
@@ -82,7 +87,7 @@ bool DbgEngAdapter::LoadDngEngLibraries()
     }
     else
     {
-        LogWarn("debugger.dbgEngPath is empty or invalid. The debugger is going to load the system dbgeng DLLs and they may"
+        LogWarn("debugger.x64dbgEngPath is empty or invalid. The debugger is going to load the system dbgeng DLLs and they may"
                 "not work as expected");
     }
 
