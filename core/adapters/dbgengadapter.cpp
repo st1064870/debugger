@@ -253,8 +253,8 @@ void DbgEngAdapter::Reset()
     if ( this->m_debugClient )
     {
         this->m_debugClient->EndSession(DEBUG_END_PASSIVE);
-        this->m_debugClient->Release();
         this->m_debugClient->EndProcessServer(m_server);
+        this->m_debugClient->Release();
         m_connectedToDebugServer = false;
         this->m_debugClient = nullptr;
     }
