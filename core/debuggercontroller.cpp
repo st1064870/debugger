@@ -940,8 +940,7 @@ void DebuggerController::EventHandler(const DebuggerEvent& event)
 		m_exitCode = event.data.exitData.exitCode;
 	case DetachedEventType:
 	{
-//        m_adapter = nullptr;
-//        SetLiveView(nullptr);
+        SetLiveView(nullptr);
         m_state->SetConnectionStatus(DebugAdapterNotConnectedStatus);
         m_state->SetExecutionStatus(DebugAdapterInvalidStatus);
 		break;
