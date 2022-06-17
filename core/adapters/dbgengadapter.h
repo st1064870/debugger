@@ -117,6 +117,7 @@ namespace BinaryNinjaDebugger
 
         ULONG64 m_server{};
         bool m_connectedToDebugServer = false;
+        bool m_dbgSrvLaunchedByAdapter = false;
 
 	public:
 		inline static ProcessCallbackInformation ProcessCallbackInfo{};

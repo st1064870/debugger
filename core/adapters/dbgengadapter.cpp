@@ -155,6 +155,7 @@ bool DbgEngAdapter::LaunchDbgSrv(const std::string& commandLine)
     {
         return false;
     }
+    m_dbgSrvLaunchedByAdapter = true;
     return true;
 }
 
@@ -176,6 +177,12 @@ bool DbgEngAdapter::ConnectToDebugServerInternal(const std::string& connectionSt
     if (const auto result = DebugCreate(__uuidof(IDebugClient5), reinterpret_cast<void**>(&this->m_debugClient));
             result != S_OK)
         throw std::runtime_error("Failed to create IDebugClient5");
+
+    QUERY_DEBUG_INTERFACE(IDebugControl5, &this->m_debugControl);
+    QUERY_DEBUG_INTERFACE(IDebugDataSpaces, &this->m_debugDataSpaces);
+    QUERY_DEBUG_INTERFACE(IDebugRegisters, &this->m_debugRegisters);
+    QUERY_DEBUG_INTERFACE(IDebugSymbols, &this->m_debugSymbols);
+    QUERY_DEBUG_INTERFACE(IDebugSystemObjects, &this->m_debugSystemObjects);
 
     constexpr size_t CONNECTION_MAX_TRY = 300;
     for (size_t i = 0; i < CONNECTION_MAX_TRY; i++)
@@ -215,12 +222,6 @@ bool DbgEngAdapter::Start()
         }
     }
 
-    QUERY_DEBUG_INTERFACE(IDebugControl5, &this->m_debugControl);
-    QUERY_DEBUG_INTERFACE(IDebugDataSpaces, &this->m_debugDataSpaces);
-    QUERY_DEBUG_INTERFACE(IDebugRegisters, &this->m_debugRegisters);
-    QUERY_DEBUG_INTERFACE(IDebugSymbols, &this->m_debugSymbols);
-    QUERY_DEBUG_INTERFACE(IDebugSystemObjects, &this->m_debugSystemObjects);
-
 	m_debugEventCallbacks.SetAdapter(this);
     if (const auto result = this->m_debugClient->SetEventCallbacks(&this->m_debugEventCallbacks);
             result != S_OK)
@@ -249,18 +250,25 @@ void DbgEngAdapter::Reset()
     if ( !this->m_debugActive )
         return;
 
-    SAFE_RELEASE(this->m_debugControl);
-    SAFE_RELEASE(this->m_debugDataSpaces);
-    SAFE_RELEASE(this->m_debugRegisters);
-    SAFE_RELEASE(this->m_debugSymbols);
-    SAFE_RELEASE(this->m_debugSystemObjects);
-
-    if ( this->m_debugClient )
+    // Free up the resources if the dbgsrv is launched by the adapter. Otherwise, the dbgsrv is launched outside BN,
+    // we should keep everything active.
+    if (m_dbgSrvLaunchedByAdapter)
     {
-        this->m_debugClient->EndSession(DEBUG_END_PASSIVE);
-        this->m_debugClient->EndProcessServer(m_server);
+        SAFE_RELEASE(this->m_debugControl);
+        SAFE_RELEASE(this->m_debugDataSpaces);
+        SAFE_RELEASE(this->m_debugRegisters);
+        SAFE_RELEASE(this->m_debugSymbols);
+        SAFE_RELEASE(this->m_debugSystemObjects);
+
+        if ( this->m_debugClient )
+        {
+            this->m_debugClient->EndSession(DEBUG_END_PASSIVE);
+            this->m_debugClient->EndProcessServer(m_server);
+            m_dbgSrvLaunchedByAdapter = false;
+            m_connectedToDebugServer = false;
+            m_server = 0;
+        }
         this->m_debugClient->Release();
-        m_connectedToDebugServer = false;
         this->m_debugClient = nullptr;
     }
 
