@@ -29,6 +29,7 @@ limitations under the License.
 #include "../../cli/log.h"
 #include "queuedadapter.h"
 #include "../debuggerevent.h"
+#include "shlobj_core.h"
 #pragma warning(push)
 // warning C40005, macro redefinition
 #pragma warning(disable: 5)
@@ -52,9 +53,18 @@ std::string DbgEngAdapter::GetDbgEngPath(const std::string& arch)
         path = Settings::Instance()->Get<string>("debugger.x86dbgEngPath");
 
     if (path.empty())
-        return path;
+    {
+        char appData[MAX_PATH];
+        if (!SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, appData)))
+            return "";
+        auto debuggerRoot = filesystem::path(appData) / "Binary Ninja" / "dbgeng" / "Windows Kits" / "10" / "Debuggers" / arch;
+        if (!filesystem::exists(debuggerRoot))
+            return "";
 
-    auto enginePath = filesystem::path(path) / arch;
+        path = debuggerRoot.string();
+    }
+
+    auto enginePath = filesystem::path(path);
     if (!filesystem::exists(enginePath))
         return "";
 
