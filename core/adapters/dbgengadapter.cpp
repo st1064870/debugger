@@ -458,6 +458,8 @@ void DbgEngAdapter::EngineLoop()
 
 		Wait();
 	}
+
+    m_lastExecutionStatus = DEBUG_STATUS_BREAK;
 }
 
 bool DbgEngAdapter::AttachInternal(std::uint32_t pid)
