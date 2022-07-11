@@ -676,22 +676,25 @@ void DebuggerController::HandleInitialBreakpoint()
 	Ref<BinaryView> rebasedView = fileMetadata->GetViewOfType(m_data->GetTypeName());
 	SetData(rebasedView);
 
+	BinaryViewTypeRef debuggerType = BinaryViewType::GetByName("Debugger");
+	if (!debuggerType)
+		return;
+
+	BinaryViewRef debuggerView = debuggerType->Create(rebasedView);
+	if (!debuggerView)
+		return;
+
+	debuggerView->SetDefaultArchitecture(rebasedView->GetDefaultArchitecture());
+	debuggerView->SetDefaultPlatform(rebasedView->GetDefaultPlatform());
+
+//	rebasedView->GetFile()->AttachBinaryView(rebasedView, "Debugger");
 	ExecuteOnMainThreadAndWait([=](){
-//		ProgressIndicator progress(nullptr, "Debugger View", "Creating debugger view...");
-		bool ok = fileMetadata->CreateSnapshotedView(rebasedView, "Debugger",
-												[&](size_t cur, size_t total) { return true; });
+		bool ok = fileMetadata->AttachBinaryView(rebasedView, "Debugger");
 		if (!ok)
-			LogWarn("create snapshoted view failed");
+			LogWarn("fail to attach binary view");
 	});
 
-	BinaryViewRef liveView = fileMetadata->GetViewOfType("Debugger");
-	if (!liveView)
-	{
-		LogWarn("Invalid Debugger view!");
-		return;
-	}
-	SetLiveView(liveView);
-
+	SetLiveView(debuggerView);
 	NotifyStopped(DebugStopReason::InitialBreakpoint);
 }
 
