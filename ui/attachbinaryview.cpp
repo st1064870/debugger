@@ -16,6 +16,7 @@ limitations under the License.
 
 #include "attachbinaryview.h"
 #include "QFileDialog"
+#include "progresstask.h"
 
 using namespace BinaryNinjaDebuggerAPI;
 using namespace BinaryNinja;
@@ -83,28 +84,48 @@ void AttachBinaryViewDialog::apply()
 	if (path.empty())
 		return;
 
-	Ref<BinaryView> view = OpenView(path, false);
+	std::string baseString = m_baseEntry->text().toStdString();
+	uint64_t remoteBase;
+	try
+	{
+		remoteBase = stoull(baseString, nullptr, 16);
+	}
+	catch(const std::exception&)
+	{
+		remoteBase = 0;
+	}
 
-    std::string baseString = m_baseEntry->text().toStdString();
-    uint64_t remoteBase;
-    try
-    {
-        remoteBase = stoull(baseString, nullptr, 16);
-    }
-    catch(const std::exception&)
-    {
-        remoteBase = 0;
-    }
+	Ref<BinaryView> view;
+	ProgressTask* openTask = new ProgressTask(this, "Open", "Opening...", "Cancel", [&](std::function<bool(size_t, size_t)> progress) {
+		view = OpenView(path, false, progress);
+	});
+	openTask->wait();
+	if (!view)
+		return;
 
 	auto typeName = view->GetTypeName();
 	auto file = view->GetFile();
 	if (view->GetStart() != remoteBase)
 	{
-		file->Rebase(view, remoteBase);
+		bool result = false;
+		ProgressTask* rebaseTask = new ProgressTask(this, "Rebase", "Rebasing...", "Cancel", [&](std::function<bool(size_t, size_t)> progress) {
+			result = file->Rebase(view, remoteBase, progress);
+		});
+		rebaseTask->wait();
+		if (!result)
+			return;
 	}
 
 	Ref<BinaryView> rebasedView = file->GetViewOfType(typeName);
-	m_controller->GetLiveView()->GetFile()->AttachBinaryView(rebasedView, "Debugger");
+	Ref<FileMetadata> debuggerFile = m_controller->GetLiveView()->GetFile();
+
+	bool result = false;
+	ProgressTask* attachTask = new ProgressTask(this, "Attach", "Attaching...", "Cancel", [&](std::function<bool(size_t, size_t)> progress) {
+		result = debuggerFile->AttachBinaryView(rebasedView, "Debugger", progress);
+	});
+	attachTask->wait();
+	if (!result)
+		return;
 
     accept();
 }
