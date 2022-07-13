@@ -104,8 +104,7 @@ void AttachBinaryViewDialog::apply()
 	}
 
 	Ref<BinaryView> rebasedView = file->GetViewOfType(typeName);
-	LogWarn("start: 0x%llx", rebasedView->GetStart());
-	m_controller->GetLiveView()->GetFile()->AttachBinaryView(view, "Debugger");
+	m_controller->GetLiveView()->GetFile()->AttachBinaryView(rebasedView, "Debugger");
 
     accept();
 }
