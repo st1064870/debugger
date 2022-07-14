@@ -656,6 +656,11 @@ DebugStopReason DebuggerController::RunToAndWait(const std::vector<uint64_t>& re
 void DebuggerController::HandleInitialBreakpoint()
 {
 	m_state->UpdateCaches();
+	if (m_state->GetModules()->IsModuleLoaded(m_state->GetExecutablePath()))
+	{
+
+	}
+
 	// Rebase the binary and create DebugView
 	uint64_t remoteBase = m_state->GetRemoteBase();
 

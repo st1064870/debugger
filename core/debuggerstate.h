@@ -69,6 +69,7 @@ namespace BinaryNinjaDebugger
 		// TODO: These conversion functions are not very robust for lookup failures. They need to be improved for it.
 		DebugModule GetModuleByName(const std::string& module);
 		uint64_t GetModuleBase(const std::string& name);
+		bool IsModuleLoaded(const std::string& name);
 		DebugModule GetModuleForAddress(uint64_t remoteAddress);
 		ModuleNameAndOffset AbsoluteAddressToRelative(uint64_t absoluteAddress);
 		uint64_t RelativeAddressToAbsolute(const ModuleNameAndOffset& relativeAddress);

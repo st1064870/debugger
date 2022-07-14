@@ -296,6 +296,22 @@ uint64_t DebuggerModules::GetModuleBase(const std::string& name)
 }
 
 
+bool DebuggerModules::IsModuleLoaded(const std::string& name)
+{
+	if (IsDirty())
+		Update();
+
+    for (const DebugModule& module: m_modules)
+    {
+        if (module.IsSameBaseModule(name))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 DebugModule DebuggerModules::GetModuleByName(const std::string& name)
 {
 	if (IsDirty())
