@@ -17,6 +17,7 @@ limitations under the License.
 #include "attachbinaryview.h"
 #include "QFileDialog"
 #include "progresstask.h"
+#include "QMessageBox"
 
 using namespace BinaryNinjaDebuggerAPI;
 using namespace BinaryNinja;
@@ -85,6 +86,8 @@ AttachBinaryViewDialog::AttachBinaryViewDialog(QWidget* parent, DebuggerControll
 
 void AttachBinaryViewDialog::apply()
 {
+	auto context = UIContext::contextForWidget(this);
+
     std::string path = m_pathEntry->text().toStdString();
 	if (path.empty())
 		return;
@@ -106,7 +109,12 @@ void AttachBinaryViewDialog::apply()
 	});
 	openTask->wait();
 	if (!view)
+	{
+		QMessageBox::warning(context ? context->mainWindow() : nullptr, "Failed to Open",
+								"Failed to open the selected file/database.");
+		reject();
 		return;
+	}
 
 	auto typeName = view->GetTypeName();
 	auto file = view->GetFile();
@@ -118,7 +126,12 @@ void AttachBinaryViewDialog::apply()
 		});
 		rebaseTask->wait();
 		if (!result)
+		{
+			QMessageBox::warning(context ? context->mainWindow() : nullptr, "Failed to Rebase",
+									"Failed to rebase the binary view to the specified image base.");
+			reject();
 			return;
+		}
 	}
 
 	Ref<BinaryView> rebasedView = file->GetViewOfType(typeName);
@@ -130,7 +143,14 @@ void AttachBinaryViewDialog::apply()
 	});
 	attachTask->wait();
 	if (!result)
+	{
+		QMessageBox::warning(context ? context->mainWindow() : nullptr, "Failed to Add",
+								"Failed to add the binary into the debugger view.");
+		reject();
 		return;
+	}
 
+	QMessageBox::information(context ? context->mainWindow() : nullptr, "Successfully Added",
+							 "Successfully added the binary into the debugger view.");
     accept();
 }

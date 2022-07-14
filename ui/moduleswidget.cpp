@@ -333,14 +333,5 @@ void DebugModulesWidget::attach()
 	UIContext* context = UIContext::contextForWidget(this);
 	auto dialog = new AttachBinaryViewDialog(context->mainWindow(), m_controller,
 											QString::fromStdString(module.path()), module.address());
-	if (dialog->exec () == QDialog::Accepted)
-	{
-		QMessageBox::information(context->mainWindow(), "Successfully Added",
-								 "Successfully added the binary into the debugger view.");
-	}
-	else
-	{
-		QMessageBox::warning(context->mainWindow(), "Failed to Add",
-								"Failed to add the binary into the debugger view.");
-	}
+	dialog->exec();
 }

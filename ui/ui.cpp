@@ -471,16 +471,7 @@ void GlobalDebuggerUI::SetupMenu(UIContext* context)
 			return;
 
 		auto dialog = new AttachBinaryViewDialog(context->mainWindow(), controller);
-		if (dialog->exec () == QDialog::Accepted)
-        {
-            QMessageBox::information(context->mainWindow(), "Successfully Added",
-                                     "Successfully added the binary into the debugger view.");
-        }
-        else
-		{
-			QMessageBox::warning(context->mainWindow(), "Failed to Add",
-									"Failed to add the binary into the debugger view.");
-		}
+		dialog->exec();
 	}, connectedAndStopped));
 	debuggerMenu->addAction("Add Binary View Into Debugger...", "Misc");
 
