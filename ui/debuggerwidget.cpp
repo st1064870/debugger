@@ -42,7 +42,7 @@ DebuggerWidget::DebuggerWidget(const QString& name, ViewFrame* view, BinaryViewR
     m_controlsWidget = new DebugControlsWidget(this, "Controls", data);
     m_registersWidget = new DebugRegistersWidget("Debugger Registers", m_view, m_data);
     m_breakpointsWidget = new DebugBreakpointsWidget("Debugger Breakpoints", m_view, m_data, m_menu);
-    m_modulesWidget = new DebugModulesWidget("Debugger Modules", m_view, m_data);
+    m_modulesWidget = new DebugModulesWidget("Debugger Modules", m_view, m_data, m_menu);
 
     m_splitter->addWidget(m_controlsWidget);
     m_splitter->addWidget(m_registersWidget);

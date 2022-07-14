@@ -22,7 +22,8 @@ using namespace BinaryNinjaDebuggerAPI;
 using namespace BinaryNinja;
 using namespace std;
 
-AttachBinaryViewDialog::AttachBinaryViewDialog(QWidget* parent, DebuggerController* controller): QDialog()
+AttachBinaryViewDialog::AttachBinaryViewDialog(QWidget* parent, DebuggerController* controller, const QString& path,
+												uint64_t imageBase): QDialog()
 {
     setWindowTitle("Attach Binary View");
     setMinimumSize(UIContext::getScaledWindowSize(400, 130));
@@ -36,7 +37,11 @@ AttachBinaryViewDialog::AttachBinaryViewDialog(QWidget* parent, DebuggerControll
 
     m_pathEntry = new QLineEdit(this);
 	m_pathEntry->setMinimumWidth(800);
+	if (!path.isEmpty())
+		m_pathEntry->setText(path);
+
     m_baseEntry = new QLineEdit(this);
+	m_baseEntry->setText(QString::fromStdString("0x") + QString::number(imageBase, 16));
 
 	auto* pathSelector = new QPushButton("...", this);
 	pathSelector->setMaximumWidth(30);

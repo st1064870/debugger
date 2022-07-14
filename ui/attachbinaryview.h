@@ -38,7 +38,8 @@ private:
 	QLineEdit* m_baseEntry;
 
 public:
-	AttachBinaryViewDialog(QWidget* parent, BinaryNinjaDebuggerAPI::DebuggerController* controller);
+	AttachBinaryViewDialog(QWidget* parent, BinaryNinjaDebuggerAPI::DebuggerController* controller,
+							const QString& path = "", uint64_t imageBase = 0);
 
 private Q_SLOTS:
 	void apply();

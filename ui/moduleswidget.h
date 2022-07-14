@@ -104,39 +104,36 @@ public:
 };
 
 
-class DebugModulesWidget: public SidebarWidget
+class DebugModulesWidget: public QWidget
 {
     Q_OBJECT
 
     ViewFrame* m_view;
     DebuggerController* m_controller;
 
-    UIActionHandler* M_actionHandler;
     QTableView* m_table;
     DebugModulesListModel* m_model;
     DebugModulesItemDelegate* m_delegate;
 
-    // void shouldBeVisible()
-    virtual void notifyFontChanged() override;
+	UIActionHandler m_actionHandler;
+	UIActionHandler* m_handler;
+	ContextMenuManager* m_contextMenuManager;
+	Menu* m_menu;
 
+    // void shouldBeVisible()
+//    virtual void notifyFontChanged() override;
+
+	virtual void contextMenuEvent(QContextMenuEvent* event) override;
 
 public:
-    DebugModulesWidget(const QString& name, ViewFrame* view, BinaryViewRef data);
+    DebugModulesWidget(const QString& name, ViewFrame* view, BinaryViewRef data, Menu* menu);
 
     void notifyModulesChanged(std::vector<DebugModule> modules);
+
+private slots:
+	void attach();
 
 public slots:
     void updateContent();
 };
 
-
-class DebugModulesWidgetType : public SidebarWidgetType {
-public:
-    DebugModulesWidgetType(const QImage& icon, const QString& name) : SidebarWidgetType(icon, name) { }
-
-    bool isInReferenceArea() const override { return false; }
-
-    SidebarWidget* createWidget(ViewFrame* frame, BinaryViewRef data) override {
-        return new DebugModulesWidget("Debugger Modules", frame, data);
-    }
-};

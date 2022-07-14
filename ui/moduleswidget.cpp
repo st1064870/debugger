@@ -17,6 +17,9 @@ limitations under the License.
 #include <QPainter>
 #include <QHeaderView>
 #include "moduleswidget.h"
+#include "attachbinaryview.h"
+#include "QMessageBox"
+#include "menus.h"
 
 using namespace BinaryNinja;
 using namespace std;
@@ -244,8 +247,8 @@ QSize DebugModulesItemDelegate::sizeHint(const QStyleOptionViewItem& option, con
 }
 
 
-DebugModulesWidget::DebugModulesWidget(const QString& name, ViewFrame* view, BinaryViewRef data):
-    SidebarWidget(name), m_view(view)
+DebugModulesWidget::DebugModulesWidget(const QString& name, ViewFrame* view, BinaryViewRef data, Menu* menu):
+    m_view(view)
 {
     m_controller = DebuggerController::GetController(data);
 
@@ -274,6 +277,18 @@ DebugModulesWidget::DebugModulesWidget(const QString& name, ViewFrame* view, Bin
     layout->addWidget(m_table);
     setLayout(layout);
 
+	m_actionHandler.setupActionHandler(this);
+	m_contextMenuManager = new ContextMenuManager(this);
+	m_handler = UIActionHandler::actionHandlerFromWidget(this);
+	m_menu = menu;
+	if (m_menu == nullptr)
+		m_menu = new Menu();
+
+	QString actionName = QString::fromStdString("Attach Binary View For Module");
+	UIAction::registerAction(actionName);
+	m_menu->addAction(actionName, "Options", MENU_ORDER_NORMAL);
+	m_handler->bindAction(actionName, UIAction([&](){ attach(); }));
+
     updateContent();
 }
 
@@ -285,10 +300,10 @@ void DebugModulesWidget::notifyModulesChanged(std::vector<DebugModule> modules)
 }
 
 
-void DebugModulesWidget::notifyFontChanged()
-{
-    m_delegate->updateFonts();
-}
+//void DebugModulesWidget::notifyFontChanged()
+//{
+//    m_delegate->updateFonts();
+//}
 
 
 void DebugModulesWidget::updateContent()
@@ -298,4 +313,34 @@ void DebugModulesWidget::updateContent()
 
     std::vector<DebugModule> modules = m_controller->GetModules();
     notifyModulesChanged(modules);
+}
+
+
+void DebugModulesWidget::contextMenuEvent(QContextMenuEvent* event)
+{
+    m_contextMenuManager->show(m_menu, m_handler);
+}
+
+
+void DebugModulesWidget::attach()
+{
+	QModelIndexList sel = m_table->selectionModel()->selectedRows();
+	if (sel.empty())
+		return;
+
+	auto module = m_model->getRow(sel[0].row());
+
+	UIContext* context = UIContext::contextForWidget(this);
+	auto dialog = new AttachBinaryViewDialog(context->mainWindow(), m_controller,
+											QString::fromStdString(module.path()), module.address());
+	if (dialog->exec () == QDialog::Accepted)
+	{
+		QMessageBox::information(context->mainWindow(), "Successfully Added",
+								 "Successfully added the binary into the debugger view.");
+	}
+	else
+	{
+		QMessageBox::warning(context->mainWindow(), "Failed to Add",
+								"Failed to add the binary into the debugger view.");
+	}
 }
